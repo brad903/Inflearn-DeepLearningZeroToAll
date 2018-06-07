@@ -6,10 +6,10 @@
       <change beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
       <change beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/data-01-test-score.csv" />
       <change beforePath="" afterPath="$PROJECT_DIR$/lab-04-1-multi_variable_linear_regression.py" />
       <change beforePath="" afterPath="$PROJECT_DIR$/lab-04-2-multi_variable_matmul_linear_regression.py" />
       <change beforePath="" afterPath="$PROJECT_DIR$/lab-04-3-file_input_linear_regression.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/lab-04-4-tf_reader_linear_regression.py" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />

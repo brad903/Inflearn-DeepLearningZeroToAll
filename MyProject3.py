@@ -2,12 +2,8 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-#from PIL import Image
-from skimage import data, color
-from skimage.transform import rescale, resize, downscale_local_mean
 import cv2
 import random
-import os
 
 # Load Data
 Image_path='./npy_dataset/X.npy'
@@ -84,27 +80,52 @@ X = tf.placeholder(tf.float32,name="X-Input")
 Y = tf.placeholder(tf.float32,name="Y-Output")
 
 # Hyperparameter
-learning_rate = 0.1
-epochs = 5000
-x_inp = x_result_array.shape[1] #Neurons in input layer -> Dimensions of feature input
-n_1 = 1000 #Neurons in first hidden layer
-y_out = 10 #Neurons in output layer -> 10 Classes
+learning_rate = 0.01
+epochs = 7000
+x_inp = x_result_array.shape[1]  #Neurons in input layer -> Dimensions of feature input
+n_n = 1500  #Neurons in hidden layer
+y_out = 10  #Neurons in output layer -> 10 Classes
+keep_prob = tf.placeholder(tf.float32) # dropout
 
 # Initialize The Weights and Biases
-w1 = tf.Variable(tf.random_normal([x_inp, n_1]), name="w1")  # Input -> First Hidden Layer
-w2 = tf.Variable(tf.random_normal([n_1, y_out]), name="w2")  # First Hidden Layer -> Output Layer
+w1 = tf.get_variable("w1", shape=[x_inp, n_n],
+                     initializer=tf.contrib.layers.xavier_initializer())  # xavier를 이용하여 초기화!
+w2 = tf.get_variable("w2", shape=[n_n, n_n],
+                     initializer=tf.contrib.layers.xavier_initializer())
+w3 = tf.get_variable("w3", shape=[n_n, n_n],
+                     initializer=tf.contrib.layers.xavier_initializer())
+w4 = tf.get_variable("w4", shape=[n_n, n_n],
+                     initializer=tf.contrib.layers.xavier_initializer())
+w5 = tf.get_variable("w5", shape=[n_n, y_out],
+                     initializer=tf.contrib.layers.xavier_initializer())
 
-b1 = tf.Variable(tf.zeros([n_1]), name="b1")  # Input -> First Hidden Layer
-b2 = tf.Variable(tf.zeros([y_out]), name="b2")  # First Hidden Layer -> Output Layer
+b1 = tf.Variable(tf.random_normal([n_n]))
+b2 = tf.Variable(tf.random_normal([n_n]))
+b3 = tf.Variable(tf.random_normal([n_n]))
+b4 = tf.Variable(tf.random_normal([n_n]))
+b5 = tf.Variable(tf.random_normal([y_out]))
 
 
 # Neural Network Model
-#First Hidden Layer
+#Hidden Layers
 A1 = tf.matmul(X,w1)+b1
 H1 = tf.nn.relu(A1)
+H1 = tf.nn.dropout(H1, keep_prob=keep_prob)
+
+A2 = tf.matmul(H1,w2)+b2
+H2 = tf.nn.relu(A2)
+H2 = tf.nn.dropout(H2, keep_prob=keep_prob)
+
+A3 = tf.matmul(H2,w3)+b3
+H3 = tf.nn.relu(A3)
+H3 = tf.nn.dropout(H3, keep_prob=keep_prob)
+
+A4 = tf.matmul(H3,w4)+b4
+H4 = tf.nn.relu(A3)
+H4 = tf.nn.dropout(H4, keep_prob=keep_prob)
 
 #Output Layer
-logit = tf.add(tf.matmul(H1,w2),b2)
+logit = tf.add(tf.matmul(H4,w5),b5)
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logit,labels=Y)
 
 #Cost with L2-Regularizer
@@ -115,7 +136,6 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 
 #Prediction
 y_pred = tf.nn.softmax(logit)
-
 #pred = tf.argmax(y_pred, axis=1 )
 
 init = tf.global_variables_initializer()
@@ -123,26 +143,29 @@ sess = tf.Session()
 sess.run(init)
 
 p = []
-for epoch in range (0,epochs):
-    values = sess.run([optimizer,cost,cross_entropy,w1,w2,b1,b2], feed_dict={X:x_result_array,Y:Y_train})
+for epoch in range(epochs):
+    feed_dict = {X: x_result_array, Y: Y_train, keep_prob: 0.7}
+    c, _ = sess.run([cost, optimizer], feed_dict=feed_dict)
 
-    if epoch%100 ==0:
-        print("Epoch:", epoch)
-        print("Cost:",values[1])
-        print("_____")
-        p.append(values[1])
+    if epoch%1000 ==0:
+        print('Epoch:', '%05d' % (epoch), 'cost =', '{:.9f}'.format(c))
+        p.append(c)
 
 # Test model and check accuracy
 correct_prediction = tf.equal(tf.argmax(logit, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-print('Accuracy:', sess.run(accuracy, feed_dict={X:x_test_array, Y:Y_test}))
+print('Accuracy:', sess.run(accuracy, feed_dict={X:x_test_array, Y:Y_test, keep_prob: 1}))
 
 # Get one and predict
-r = random.randint(0, x_test_array - 1)
+r = random.randint(0, x_test_array.shape[0] - 1)
 print("Label: ", sess.run(tf.argmax(Y_test[r:r + 1], 1)))
 print("Prediction: ", sess.run(
-    tf.argmax(logit, 1), feed_dict={X: Y_test[r:r + 1]}))
+    tf.argmax(logit, 1), feed_dict={X: x_test_array[r:r + 1], keep_prob: 1}))
 
 plt.plot(p[1:])
 plt.title("Cost Decrease")
+plt.show()
+
+plt.imshow(x_test_array[r:r + 1].
+          reshape(32, 32), cmap='Greys', interpolation='nearest')
 plt.show()
